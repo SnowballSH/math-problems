@@ -3,6 +3,7 @@ import base64
 import re
 import subprocess
 import tempfile
+import shutil
 
 import pypandoc
 import json
@@ -17,9 +18,14 @@ def _render_asy(code: str) -> bytes:
     if 'import olympiad;' not in code:
         code = 'import olympiad;\n' + code
     with tempfile.TemporaryDirectory() as tmpdir:
-        asy_path = f"{tmpdir}/fig.asy"
+        tmp = Path(tmpdir)
+        asy_path = tmp / "fig.asy"
         with open(asy_path, 'w', encoding='utf-8') as f:
             f.write(code)
+        # copy olympiad module if bundled
+        module = Path(__file__).parent / "libs" / "olympiad.asy"
+        if module.exists():
+            shutil.copy(module, tmp / "olympiad.asy")
         try:
             subprocess.run(
                 ['asy', '-f', 'png', '-o', 'out', asy_path],
