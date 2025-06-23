@@ -2,12 +2,14 @@ import json
 import os
 import sys
 import shutil
+import base64
+import re
 import pytest
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from aops_downloader import download_contest
-from renderer import render_json, render_wikitext, MATHJAX_SCRIPT
+from renderer import render_json, render_wikitext, MATHJAX_SCRIPT, DIAGRAM_SIZE
 
 
 pandoc_exists = True
@@ -50,3 +52,13 @@ def test_render_wikitext_asy():
 def test_math_rendering():
     html = render_wikitext("The sum is <math>a+b=c</math> and also \\(d\\)")
     assert "math inline" in html
+
+
+@skip_render
+def test_svg_fixed_size():
+    html = render_wikitext("<asy>size(100);draw((0,0)--(1,0));</asy>")
+    m = re.search(r"data:image/svg\\+xml;base64,([^\"]+)", html)
+    assert m
+    svg = base64.b64decode(m.group(1)).decode("utf-8")
+    assert f'width="{DIAGRAM_SIZE}px"' in svg
+    assert f'height="{DIAGRAM_SIZE}px"' in svg

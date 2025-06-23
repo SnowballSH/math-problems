@@ -4,6 +4,7 @@ import re
 import subprocess
 import tempfile
 import shutil
+from xml.etree import ElementTree as ET
 
 import pypandoc
 import json
@@ -15,8 +16,11 @@ MATHJAX_SCRIPT = (
 )
 
 
+DIAGRAM_SIZE = 300  # desired width/height in pixels for output diagrams
+
+
 def _render_asy(code: str) -> bytes:
-    """Render Asymptote code to SVG and return bytes."""
+    """Render Asymptote code to SVG and return bytes with unified size."""
     # Ensure olympiad module for AoPS diagrams
     if 'import olympiad;' not in code:
         code = 'import olympiad;\n' + code
@@ -49,8 +53,19 @@ def _render_asy(code: str) -> bytes:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        with open(svg_path, 'rb') as img:
-            return img.read()
+        with open(svg_path, 'r', encoding='utf-8') as img:
+            svg = img.read()
+        # normalize diagram dimensions to DIAGRAM_SIZE
+        try:
+            root = ET.fromstring(svg)
+            root.set('width', f"{DIAGRAM_SIZE}px")
+            root.set('height', f"{DIAGRAM_SIZE}px")
+            svg = ET.tostring(root, encoding='unicode')
+        except ET.ParseError:
+            # if parsing fails, fall back to regex replacement
+            svg = re.sub(r'width="[^"]+"', f'width="{DIAGRAM_SIZE}px"', svg, 1)
+            svg = re.sub(r'height="[^"]+"', f'height="{DIAGRAM_SIZE}px"', svg, 1)
+        return svg.encode('utf-8')
 
 
 def render_wikitext(wikitext: str) -> str:
