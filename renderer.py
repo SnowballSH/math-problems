@@ -1,4 +1,3 @@
-# Simple AoPS wikitext renderer
 import base64
 import re
 import subprocess
@@ -14,7 +13,6 @@ ASY_RE = re.compile(r'<asy>(.*?)</asy>', re.DOTALL | re.IGNORECASE)
 MATHJAX_SCRIPT = (
     '<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>'
 )
-
 
 DIAGRAM_SIZE = 300  # desired width/height in pixels for output diagrams
 
@@ -87,25 +85,38 @@ def render_wikitext(wikitext: str) -> str:
 
 
 def render_json(json_file: str, output_dir: str) -> None:
-    """Render problems stored in a JSON file to individual HTML files and a combined page."""
+    """Render problems stored in the new JSON format to HTML files."""
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    with open(json_file, 'r', encoding='utf-8') as f:
+    with open(json_file, "r", encoding="utf-8") as f:
         problems = json.load(f)
 
-    all_sections = []
-    for key in sorted(problems, key=lambda k: int(k)):
-        html = render_wikitext(problems[key])
-        page = f"<html><head>{MATHJAX_SCRIPT}</head><body>\n{html}\n</body></html>"
-        out_path = Path(output_dir) / f"{key}.html"
-        out_path.write_text(page, encoding='utf-8')
-        all_sections.append(f"<h2>Problem {key}</h2>\n{html}")
+    # Sort by problem number for combined page
+    sorted_ids = sorted(problems, key=lambda k: problems[k]["Problem Number"])
+
+    all_sections: list[str] = []
+    for pid in sorted_ids:
+        data = problems[pid]
+        q_html = render_wikitext(data["Question"])
+        ans_html = (
+            f"<p><strong>Answer:</strong> {data['Answer']}</p>" if data.get("Answer") else ""
+        )
+        sol_html = render_wikitext(data["Solution"]) if data.get("Solution") else ""
+        body = q_html
+        if ans_html:
+            body += "\n" + ans_html
+        if sol_html:
+            body += "\n<h3>Solution</h3>\n" + sol_html
+        page = f"<html><head>{MATHJAX_SCRIPT}</head><body>\n{body}\n</body></html>"
+        out_path = Path(output_dir) / f"{pid}.html"
+        out_path.write_text(page, encoding="utf-8")
+        all_sections.append(f"<h2>Problem {data['Problem Number']}</h2>\n{q_html}")
 
     index = (
         f"<html><head>{MATHJAX_SCRIPT}</head><body>\n"
         + "\n".join(all_sections)
         + "\n</body></html>"
     )
-    (Path(output_dir) / "index.html").write_text(index, encoding='utf-8')
+    (Path(output_dir) / "index.html").write_text(index, encoding="utf-8")
 
 
 if __name__ == '__main__':

@@ -11,7 +11,6 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from aops_downloader import download_contest
 from renderer import render_json, render_wikitext, MATHJAX_SCRIPT, DIAGRAM_SIZE
 
-
 pandoc_exists = True
 try:
     import pypandoc
@@ -26,8 +25,8 @@ skip_render = pytest.mark.skipif(not (pandoc_exists and asy_exists), reason="ren
 
 @skip_render
 def test_render_json(tmp_path):
-    problems = download_contest(2025, "8")
-    subset = {"1": problems[1], "5": problems[5]}
+    problems = download_contest("2025", "8")
+    subset = {pid: problems[pid] for pid in ("2025-8-1", "2025-8-5")}
     json_path = tmp_path / "problems.json"
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(subset, f, ensure_ascii=False)
@@ -36,15 +35,20 @@ def test_render_json(tmp_path):
 
     index_path = tmp_path / "index.html"
     assert index_path.is_file()
-    assert (tmp_path / "1.html").is_file()
-    assert (tmp_path / "5.html").is_file()
-    assert MATHJAX_SCRIPT in index_path.read_text(encoding="utf-8")
+    idx_html = index_path.read_text(encoding="utf-8")
+    assert MATHJAX_SCRIPT in idx_html
+    assert "Answer:" not in idx_html
+
+    file1 = (tmp_path / "2025-8-1.html").read_text(encoding="utf-8")
+    assert "Answer:" in file1
+    file5 = (tmp_path / "2025-8-5.html").read_text(encoding="utf-8")
+    assert "Answer:" in file5
 
 
 @skip_render
 def test_render_wikitext_asy():
-    problems = download_contest(2025, "8")
-    html = render_wikitext(problems[5])
+    problems = download_contest("2025", "8")
+    html = render_wikitext(problems["2025-8-5"]["Question"])
     assert "data:image/svg+xml;base64" in html
 
 
