@@ -31,20 +31,27 @@ def fetch_page_wikitext(page_title: str) -> str:
     return text
 
 
+_HEADER_RE = re.compile(r"^==\s*([^=]+?)\s*==\s*$", re.MULTILINE)
 _PROBLEM_HEADER_RE = re.compile(r"^==\s*Problem\s*(\d+)\s*==\s*$", re.MULTILINE)
 _SOLUTION_LINK_RE = re.compile(r"\[\[[^\]]+\|Solution\]\]")
+_FILE_RE = re.compile(r"\[\[File:[^\]]+\]\]")
 
 
 def parse_problems(wikitext: str) -> Dict[int, str]:
-    """Parse wikitext and return mapping from problem number to wikitext."""
-    problems = {}
-    matches = list(_PROBLEM_HEADER_RE.finditer(wikitext))
-    for idx, match in enumerate(matches):
-        start = match.end()
-        end = matches[idx + 1].start() if idx + 1 < len(matches) else len(wikitext)
-        section = wikitext[start:end].strip()
-        section = _SOLUTION_LINK_RE.sub("", section).strip()
-        number = int(match.group(1))
+    """Parse wikitext and return mapping from problem number to cleaned wikitext."""
+    problems: Dict[int, str] = {}
+    headers = list(_HEADER_RE.finditer(wikitext))
+    for i, header in enumerate(headers):
+        title = header.group(1).strip()
+        m = _PROBLEM_HEADER_RE.match(header.group(0))
+        if not m:
+            continue
+        number = int(m.group(1))
+        end = headers[i + 1].start() if i + 1 < len(headers) else len(wikitext)
+        section = wikitext[header.end():end].strip()
+        section = _SOLUTION_LINK_RE.sub("", section)
+        section = _FILE_RE.sub("", section)
+        section = section.strip()
         problems[number] = section
     return problems
 
