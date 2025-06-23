@@ -7,7 +7,7 @@ import pytest
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from aops_downloader import download_contest
-from renderer import render_json, render_wikitext
+from renderer import render_json, render_wikitext, MATHJAX_SCRIPT
 
 
 pandoc_exists = True
@@ -32,13 +32,21 @@ def test_render_json(tmp_path):
 
     render_json(str(json_path), str(tmp_path))
 
-    assert (tmp_path / "index.html").is_file()
+    index_path = tmp_path / "index.html"
+    assert index_path.is_file()
     assert (tmp_path / "1.html").is_file()
     assert (tmp_path / "5.html").is_file()
+    assert MATHJAX_SCRIPT in index_path.read_text(encoding="utf-8")
 
 
 @skip_render
 def test_render_wikitext_asy():
     problems = download_contest(2025, "8")
     html = render_wikitext(problems[5])
-    assert "data:image/png;base64" in html
+    assert "data:image/svg+xml;base64" in html
+
+
+@skip_render
+def test_math_rendering():
+    html = render_wikitext("The sum is <math>a+b=c</math> and also \\(d\\)")
+    assert "math inline" in html
