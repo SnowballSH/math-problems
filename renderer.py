@@ -22,10 +22,11 @@ def _render_asy(code: str) -> bytes:
         asy_path = tmp / "fig.asy"
         with open(asy_path, 'w', encoding='utf-8') as f:
             f.write(code)
-        # copy olympiad module if bundled
-        module = Path(__file__).parent / "libs" / "olympiad.asy"
-        if module.exists():
-            shutil.copy(module, tmp / "olympiad.asy")
+        # copy bundled Asymptote modules
+        lib_dir = Path(__file__).parent / "libs"
+        if lib_dir.is_dir():
+            for lib in lib_dir.glob("*.asy"):
+                shutil.copy(lib, tmp / lib.name)
         try:
             subprocess.run(
                 ['asy', '-f', 'png', '-o', 'out', asy_path],
