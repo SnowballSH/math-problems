@@ -1,6 +1,6 @@
 import requests
 import re
-from typing import Dict
+from typing import Dict, List, Any
 
 API_URL = "https://artofproblemsolving.com/wiki/api.php"
 
@@ -56,11 +56,63 @@ def parse_problems(wikitext: str) -> Dict[int, str]:
     return problems
 
 
-def download_contest(year: int, contest: str) -> Dict[int, str]:
-    """Download contest problems wikitext from AoPS."""
-    title = f"{year} AMC {contest} Problems"
-    text = fetch_page_wikitext(title)
-    return parse_problems(text)
+_ANSWER_RE = re.compile(r"^#\s*([A-E])\b", re.MULTILINE)
+
+
+def parse_answers(wikitext: str) -> Dict[int, str]:
+    """Parse answer key wikitext and return mapping from problem number to answer letter."""
+    answers: Dict[int, str] = {}
+    for i, line in enumerate(wikitext.splitlines(), start=1):
+        m = _ANSWER_RE.match(line.strip())
+        if m:
+            answers[i] = m.group(1)
+    return answers
+
+
+def parse_solutions(wikitext: str) -> str:
+    """Extract solution sections from a problem page wikitext."""
+    solutions: List[str] = []
+    headers = list(_HEADER_RE.finditer(wikitext))
+    for i, header in enumerate(headers):
+        title = header.group(1).strip().lower()
+        if "solution" in title and "video" not in title:
+            end = headers[i + 1].start() if i + 1 < len(headers) else len(wikitext)
+            section = wikitext[header.end():end].strip()
+            section = _FILE_RE.sub("", section)
+            section = re.sub(r"^~.*$", "", section, flags=re.MULTILINE)
+            solutions.append(section.strip())
+    return "\n\n".join(filter(None, solutions))
+
+
+def download_contest(year: str | int, contest: str) -> Dict[str, Dict[str, Any]]:
+    """Download contest problems, answers, and solutions from AoPS."""
+    year_str = str(year)
+
+    # Download main contest page with all problems
+    problems_title = f"{year_str} AMC {contest} Problems"
+    problems_text = fetch_page_wikitext(problems_title)
+    problems = parse_problems(problems_text)
+
+    # Download answer key
+    answer_title = f"{year_str} AMC {contest} Answer Key"
+    answers_text = fetch_page_wikitext(answer_title)
+    answers = parse_answers(answers_text)
+
+    result: Dict[str, Dict[str, Any]] = {}
+    for number, question in problems.items():
+        problem_page = f"{year_str} AMC {contest} Problems/Problem {number}"
+        sol_text = fetch_page_wikitext(problem_page)
+        solution = parse_solutions(sol_text)
+        pid = f"{year_str}-{contest}-{number}"
+        result[pid] = {
+            "ID": pid,
+            "Year": year_str,
+            "Problem Number": number,
+            "Question": question,
+            "Answer": answers.get(number, ""),
+            "Solution": solution,
+        }
+    return result
 
 
 if __name__ == "__main__":
@@ -68,7 +120,7 @@ if __name__ == "__main__":
     import json
 
     parser = argparse.ArgumentParser(description="Download AMC problems from AoPS")
-    parser.add_argument("year", type=int, help="Contest year")
+    parser.add_argument("year", help="Contest year")
     parser.add_argument("contest", help="Contest name, e.g. '8', '10A', '10B', '12A', '12B'")
     parser.add_argument("--output", help="Output JSON file")
 
