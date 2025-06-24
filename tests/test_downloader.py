@@ -41,3 +41,11 @@ def test_parsers_and_download():
     assert first["Answer"] in "ABCDE"
     assert "Video Solution" not in first["Solution"]
 
+
+def test_redirect_page():
+    text = fetch_page_wikitext("2023 AMC 10A Problems/Problem 5")
+    # should automatically follow redirect
+    assert "#redirect" not in text.lower()
+    solution = parse_solutions(text)
+    assert solution
+
