@@ -26,7 +26,9 @@ def fetch_page_wikitext(page_title: str) -> str:
     revisions = page.get("revisions")
     if not revisions:
         raise ValueError("No revisions found")
-    text = revisions[0].get("*") or revisions[0].get("slots", {}).get("main", {}).get("*")
+    text = revisions[0].get("*") or revisions[0].get("slots", {}).get("main", {}).get(
+        "*"
+    )
     if text is None:
         raise ValueError("Content not available")
     return text
@@ -49,7 +51,7 @@ def parse_problems(wikitext: str) -> Dict[int, str]:
             continue
         number = int(m.group(1))
         end = headers[i + 1].start() if i + 1 < len(headers) else len(wikitext)
-        section = wikitext[header.end():end].strip()
+        section = wikitext[header.end() : end].strip()
         section = _SOLUTION_LINK_RE.sub("", section)
         section = _FILE_RE.sub("", section)
         section = section.strip()
@@ -78,7 +80,7 @@ def parse_solutions(wikitext: str) -> str:
         title = header.group(1).strip().lower()
         if "solution" in title and "video" not in title:
             end = headers[i + 1].start() if i + 1 < len(headers) else len(wikitext)
-            section = wikitext[header.end():end].strip()
+            section = wikitext[header.end() : end].strip()
             section = _FILE_RE.sub("", section)
             section = re.sub(r"^~.*$", "", section, flags=re.MULTILINE)
             solutions.append(section.strip())
@@ -117,15 +119,17 @@ def download_contest(year: str | int, contest: str) -> List[Dict[str, Any]]:
         sol_text = fetch_page_wikitext(problem_page)
         solution = parse_solutions(sol_text)
         pid = f"{year_str}-{contest}-{number}"
-        result.append({
-            "ID": pid,
-            "Year": year_str,
-            "ProblemNumber": number,
-            "QuestionType": "choice",
-            "Question": question,
-            "Answer": answers.get(number, ""),
-            "Solution": solution,
-        })
+        result.append(
+            {
+                "ID": pid,
+                "Year": year_str,
+                "ProblemNumber": number,
+                "QuestionType": "choice",
+                "Question": question,
+                "Answer": answers.get(number, ""),
+                "Solution": solution,
+            }
+        )
     return result
 
 
@@ -135,7 +139,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Download AMC problems from AoPS")
     parser.add_argument("year", help="Contest year")
-    parser.add_argument("contest", help="Contest name, e.g. '8', '10A', '10B', '12A', '12B'")
+    parser.add_argument(
+        "contest", help="Contest name, e.g. '8', '10A', '10B', '12A', '12B'"
+    )
     parser.add_argument("--output", help="Output JSON file")
 
     args = parser.parse_args()

@@ -14,13 +14,16 @@ from renderer import render_json, render_wikitext, MATHJAX_SCRIPT, DIAGRAM_SIZE
 pandoc_exists = True
 try:
     import pypandoc
+
     pypandoc.get_pandoc_path()
 except (ImportError, OSError):
     pandoc_exists = False
 
 asy_exists = shutil.which("asy") is not None
 
-skip_render = pytest.mark.skipif(not (pandoc_exists and asy_exists), reason="renderer dependencies missing")
+skip_render = pytest.mark.skipif(
+    not (pandoc_exists and asy_exists), reason="renderer dependencies missing"
+)
 
 
 @skip_render

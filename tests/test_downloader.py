@@ -29,7 +29,15 @@ def test_parsers_and_download():
 
     data = download_contest("2025", "8")
     assert isinstance(data, list)
-    required_keys = {"ID", "Year", "ProblemNumber", "QuestionType", "Question", "Answer", "Solution"}
+    required_keys = {
+        "ID",
+        "Year",
+        "ProblemNumber",
+        "QuestionType",
+        "Question",
+        "Answer",
+        "Solution",
+    }
     for item in data:
         assert set(item.keys()) == required_keys
         assert isinstance(item["ProblemNumber"], int)
@@ -48,4 +56,3 @@ def test_redirect_page():
     assert "#redirect" not in text.lower()
     solution = parse_solutions(text)
     assert solution
-
