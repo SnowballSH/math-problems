@@ -84,8 +84,16 @@ def parse_solutions(wikitext: str) -> str:
     return "\n\n".join(filter(None, solutions))
 
 
-def download_contest(year: str | int, contest: str) -> Dict[str, Dict[str, Any]]:
-    """Download contest problems, answers, and solutions from AoPS."""
+from typing import List
+
+
+def download_contest(year: str | int, contest: str) -> List[Dict[str, Any]]:
+    """Download contest problems, answers, and solutions from AoPS.
+
+    The returned structure is a list where each item contains the fields:
+    ``ID``, ``Year``, ``ProblemNumber``, ``QuestionType``, ``Question``,
+    ``Answer`` and ``Solution``.
+    """
     year_str = str(year)
 
     # Download main contest page with all problems
@@ -98,20 +106,22 @@ def download_contest(year: str | int, contest: str) -> Dict[str, Dict[str, Any]]
     answers_text = fetch_page_wikitext(answer_title)
     answers = parse_answers(answers_text)
 
-    result: Dict[str, Dict[str, Any]] = {}
-    for number, question in problems.items():
+    result: List[Dict[str, Any]] = []
+    for number in sorted(problems):
+        question = problems[number]
         problem_page = f"{year_str} AMC {contest} Problems/Problem {number}"
         sol_text = fetch_page_wikitext(problem_page)
         solution = parse_solutions(sol_text)
         pid = f"{year_str}-{contest}-{number}"
-        result[pid] = {
+        result.append({
             "ID": pid,
             "Year": year_str,
-            "Problem Number": number,
+            "ProblemNumber": number,
+            "QuestionType": "choice",
             "Question": question,
             "Answer": answers.get(number, ""),
             "Solution": solution,
-        }
+        })
     return result
 
 
