@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 
 ASY_RE = re.compile(r'<asy>(.*?)</asy>', re.DOTALL | re.IGNORECASE)
+CMATH_RE = re.compile(r'<cmath>(.*?)</cmath>', re.DOTALL | re.IGNORECASE)
 MATHJAX_SCRIPT = (
     '<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>'
 )
@@ -67,7 +68,7 @@ def _render_asy(code: str) -> bytes:
 
 
 def render_wikitext(wikitext: str) -> str:
-    """Convert AoPS wikitext containing <math> and <asy> tags to HTML."""
+    """Convert AoPS wikitext containing <cmath>, <math>, and <asy> tags to HTML."""
 
     def repl(match: re.Match) -> str:
         img_data = _render_asy(match.group(1).strip())
@@ -75,6 +76,7 @@ def render_wikitext(wikitext: str) -> str:
         return f'<img src="data:image/svg+xml;base64,{b64}" alt="diagram"/>'
 
     replaced = ASY_RE.sub(repl, wikitext)
+    replaced = CMATH_RE.sub(lambda m: f'<math class="math inline">{m.group(1)}</math>', replaced)
     html = pypandoc.convert_text(
         replaced,
         'html',

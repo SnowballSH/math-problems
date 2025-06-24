@@ -16,7 +16,7 @@ def fetch_page_wikitext(page_title: str) -> str:
         "redirects": 1,
         "format": "json",
     }
-    response = requests.get(API_URL, params=params, timeout=30)
+    response = requests.get(API_URL, params=params, timeout=1000)
     response.raise_for_status()
     data = response.json()
     pages = data.get("query", {}).get("pages", {})
@@ -98,17 +98,20 @@ def download_contest(year: str | int, contest: str) -> List[Dict[str, Any]]:
     year_str = str(year)
 
     # Download main contest page with all problems
+    print("Fetching problems for", year_str, contest)
     problems_title = f"{year_str} AMC {contest} Problems"
     problems_text = fetch_page_wikitext(problems_title)
     problems = parse_problems(problems_text)
 
     # Download answer key
+    print("Fetching answers for", year_str, contest)
     answer_title = f"{year_str} AMC {contest} Answer Key"
     answers_text = fetch_page_wikitext(answer_title)
     answers = parse_answers(answers_text)
 
     result: List[Dict[str, Any]] = []
     for number in sorted(problems):
+        print(f"Processing problem {number} for {year_str} AMC {contest}")
         question = problems[number]
         problem_page = f"{year_str} AMC {contest} Problems/Problem {number}"
         sol_text = fetch_page_wikitext(problem_page)
