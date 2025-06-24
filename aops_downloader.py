@@ -13,6 +13,7 @@ def fetch_page_wikitext(page_title: str) -> str:
         "prop": "revisions",
         "rvprop": "content",
         "rvslots": "main",
+        "redirects": 1,
         "format": "json",
     }
     response = requests.get(API_URL, params=params, timeout=30)
