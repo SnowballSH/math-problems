@@ -26,10 +26,16 @@ skip_render = pytest.mark.skipif(not (pandoc_exists and asy_exists), reason="ren
 @skip_render
 def test_render_json(tmp_path):
     problems = download_contest("2025", "8")
-    subset = {pid: problems[pid] for pid in ("2025-8-1", "2025-8-5")}
+    subset = [p for p in problems if p["ID"] in ("2025-8-1", "2025-8-5")]
     json_path = tmp_path / "problems.json"
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(subset, f, ensure_ascii=False)
+
+    # verify json structure
+    with open(json_path, "r", encoding="utf-8") as f:
+        saved = json.load(f)
+    assert isinstance(saved, list)
+    assert all("ID" in item for item in saved)
 
     render_json(str(json_path), str(tmp_path))
 
@@ -48,7 +54,8 @@ def test_render_json(tmp_path):
 @skip_render
 def test_render_wikitext_asy():
     problems = download_contest("2025", "8")
-    html = render_wikitext(problems["2025-8-5"]["Question"])
+    q = next(item["Question"] for item in problems if item["ID"] == "2025-8-5")
+    html = render_wikitext(q)
     assert "data:image/svg+xml;base64" in html
 
 

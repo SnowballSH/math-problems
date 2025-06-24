@@ -90,12 +90,13 @@ def render_json(json_file: str, output_dir: str) -> None:
     with open(json_file, "r", encoding="utf-8") as f:
         problems = json.load(f)
 
-    # Sort by problem number for combined page
-    sorted_ids = sorted(problems, key=lambda k: problems[k]["Problem Number"])
+    # Sort items by problem number for combined page
+    sorted_items = sorted(problems, key=lambda d: d["ProblemNumber"])
 
     all_sections: list[str] = []
-    for pid in sorted_ids:
-        data = problems[pid]
+    for item in sorted_items:
+        pid = item["ID"]
+        data = item
         q_html = render_wikitext(data["Question"])
         ans_html = (
             f"<p><strong>Answer:</strong> {data['Answer']}</p>" if data.get("Answer") else ""
@@ -109,7 +110,7 @@ def render_json(json_file: str, output_dir: str) -> None:
         page = f"<html><head>{MATHJAX_SCRIPT}</head><body>\n{body}\n</body></html>"
         out_path = Path(output_dir) / f"{pid}.html"
         out_path.write_text(page, encoding="utf-8")
-        all_sections.append(f"<h2>Problem {data['Problem Number']}</h2>\n{q_html}")
+        all_sections.append(f"<h2>Problem {data['ProblemNumber']}</h2>\n{q_html}")
 
     index = (
         f"<html><head>{MATHJAX_SCRIPT}</head><body>\n"

@@ -28,8 +28,16 @@ def test_parsers_and_download():
     assert "Video Solution" not in solution
 
     data = download_contest("2025", "8")
-    first = data["2025-8-1"]
+    assert isinstance(data, list)
+    required_keys = {"ID", "Year", "ProblemNumber", "QuestionType", "Question", "Answer", "Solution"}
+    for item in data:
+        assert set(item.keys()) == required_keys
+        assert isinstance(item["ProblemNumber"], int)
+        assert isinstance(item["QuestionType"], str)
+    first = next(item for item in data if item["ID"] == "2025-8-1")
     assert first["ID"] == "2025-8-1"
+    assert first["ProblemNumber"] == 1
+    assert first["QuestionType"] == "choice"
     assert first["Answer"] in "ABCDE"
     assert "Video Solution" not in first["Solution"]
 
