@@ -56,3 +56,31 @@ def test_redirect_page():
     assert "#redirect" not in text.lower()
     solution = parse_solutions(text)
     assert solution
+
+
+def test_aime_and_ahsme():
+    # AIME without I/II (1998)
+    aime_text = fetch_page_wikitext("1998 AIME Problems")
+    aime_problems = parse_problems(aime_text)
+    assert 1 in aime_problems and 15 in aime_problems
+
+    aime_ans_text = fetch_page_wikitext("1998 AIME Answer Key")
+    aime_answers = parse_answers(aime_ans_text)
+    assert aime_answers[1].isdigit()
+
+    aime_data = download_contest("1998", "AIME")
+    first = next(item for item in aime_data if item["ProblemNumber"] == 1)
+    assert first["Answer"].isdigit()
+
+    # AHSME (1999)
+    ahsme_text = fetch_page_wikitext("1999 AHSME Problems")
+    ahsme_problems = parse_problems(ahsme_text)
+    assert 1 in ahsme_problems and 30 in ahsme_problems
+
+    ahsme_ans_text = fetch_page_wikitext("1999 AHSME Answer Key")
+    ahsme_answers = parse_answers(ahsme_ans_text)
+    assert ahsme_answers[1] in "ABCDE"
+
+    ahsme_data = download_contest("1999", "AHSME")
+    first_h = next(item for item in ahsme_data if item["ProblemNumber"] == 1)
+    assert first_h["Answer"] in "ABCDE"
