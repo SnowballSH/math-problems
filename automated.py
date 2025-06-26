@@ -5,7 +5,7 @@ from aops_downloader import download_contest
 import os
 import json
 
-years = reversed(list(map(str, range(2005, 2026))) + ["2021 Fall"])
+years = reversed(list(map(str, range(2002, 2026))) + ["2021 Fall"])
 contests = ["8", "10A", "10B", "12A", "12B"]
 
 save_dir = "amc_problems"
