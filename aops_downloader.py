@@ -59,16 +59,22 @@ def parse_problems(wikitext: str) -> Dict[int, str]:
     return problems
 
 
-_ANSWER_RE = re.compile(r"^#\s*([A-E])\b", re.MULTILINE)
+_ANSWER_RE = re.compile(r"^#\s*([A-E]|\d{1,3})\b", re.MULTILINE)
 
 
 def parse_answers(wikitext: str) -> Dict[int, str]:
-    """Parse answer key wikitext and return mapping from problem number to answer letter."""
+    """Parse answer key wikitext and return mapping from problem number to answer string.
+
+    Answers may be single letters (A-E) for AMC/AHSME contests or numeric
+    values for AIME contests.
+    """
     answers: Dict[int, str] = {}
-    for i, line in enumerate(wikitext.splitlines(), start=1):
+    idx = 1
+    for line in wikitext.splitlines():
         m = _ANSWER_RE.match(line.strip())
         if m:
-            answers[i] = m.group(1)
+            answers[idx] = m.group(1)
+            idx += 1
     return answers
 
 
@@ -99,23 +105,33 @@ def download_contest(year: str | int, contest: str) -> List[Dict[str, Any]]:
     """
     year_str = str(year)
 
+    # Determine base wiki page prefix based on contest type
+    contest_clean = contest.strip()
+    is_aime = contest_clean.upper().startswith("AIME")
+    if is_aime:
+        base = f"{year_str} {contest_clean}"
+    elif contest_clean.upper() == "AHSME":
+        base = f"{year_str} AHSME"
+    else:
+        base = f"{year_str} AMC {contest_clean}"
+
     # Download main contest page with all problems
     print("Fetching problems for", year_str, contest)
-    problems_title = f"{year_str} AMC {contest} Problems"
+    problems_title = f"{base} Problems"
     problems_text = fetch_page_wikitext(problems_title)
     problems = parse_problems(problems_text)
 
     # Download answer key
     print("Fetching answers for", year_str, contest)
-    answer_title = f"{year_str} AMC {contest} Answer Key"
+    answer_title = f"{base} Answer Key"
     answers_text = fetch_page_wikitext(answer_title)
     answers = parse_answers(answers_text)
 
     result: List[Dict[str, Any]] = []
     for number in sorted(problems):
-        print(f"Processing problem {number} for {year_str} AMC {contest}")
+        print(f"Processing problem {number} for {year_str} {contest}")
         question = problems[number]
-        problem_page = f"{year_str} AMC {contest} Problems/Problem {number}"
+        problem_page = f"{base} Problems/Problem {number}"
         sol_text = fetch_page_wikitext(problem_page)
         solution = parse_solutions(sol_text)
         pid = f"{year_str}-{contest}-{number}"
@@ -124,7 +140,7 @@ def download_contest(year: str | int, contest: str) -> List[Dict[str, Any]]:
                 "ID": pid,
                 "Year": year_str,
                 "ProblemNumber": number,
-                "QuestionType": "choice",
+                "QuestionType": "int3" if is_aime else "choice",
                 "Question": question,
                 "Answer": answers.get(number, ""),
                 "Solution": solution,
@@ -137,10 +153,13 @@ if __name__ == "__main__":
     import argparse
     import json
 
-    parser = argparse.ArgumentParser(description="Download AMC problems from AoPS")
+    parser = argparse.ArgumentParser(
+        description="Download AMC, AIME, or AHSME problems from AoPS"
+    )
     parser.add_argument("year", help="Contest year")
     parser.add_argument(
-        "contest", help="Contest name, e.g. '8', '10A', '10B', '12A', '12B'"
+        "contest",
+        help="Contest name, e.g. '8', '10A', '10B', '12A', '12B', 'AIME I', 'AHSME'",
     )
     parser.add_argument("--output", help="Output JSON file")
 
