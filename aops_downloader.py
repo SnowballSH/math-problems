@@ -107,7 +107,8 @@ def download_contest(year: str | int, contest: str) -> List[Dict[str, Any]]:
 
     # Determine base wiki page prefix based on contest type
     contest_clean = contest.strip()
-    if contest_clean.upper().startswith("AIME"):
+    is_aime = contest_clean.upper().startswith("AIME")
+    if is_aime:
         base = f"{year_str} {contest_clean}"
     elif contest_clean.upper() == "AHSME":
         base = f"{year_str} AHSME"
@@ -139,7 +140,7 @@ def download_contest(year: str | int, contest: str) -> List[Dict[str, Any]]:
                 "ID": pid,
                 "Year": year_str,
                 "ProblemNumber": number,
-                "QuestionType": "choice",
+                "QuestionType": "int3" if is_aime else "choice",
                 "Question": question,
                 "Answer": answers.get(number, ""),
                 "Solution": solution,

@@ -17,13 +17,19 @@ def resume_download():
     for year in years:
         year_int = int(str(year).split()[0])
         contests_available = (
-            ["10A", "10B", "12A", "12B"]
+            []
+            if year_int <= 2001
+            else ["10A", "10B", "12A", "12B"]
             if "2021" in year
             else ["8"]
             if "2025" in year
             else contests
         )
-        aime = ["AIME I", "AIME II"] if year_int >= 2000 else ["AIME"]
+        aime = (
+            []
+            if "Fall" in year
+            else (["AIME I", "AIME II"] if year_int >= 2000 else ["AIME"])
+        )
         contests_available = list(contests_available) + aime
         if year_int <= 1999:
             contests_available.append("AHSME")
@@ -55,9 +61,7 @@ def resume_download():
                     print(f"Saved to {output_file}")
                     done = True
             else:
-                print(
-                    f"Already downloaded {year} {contest} problems. Skipping..."
-                )
+                print(f"Already downloaded {year} {contest} problems. Skipping...")
 
 
 if __name__ == "__main__":
