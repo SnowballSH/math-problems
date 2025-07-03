@@ -101,7 +101,7 @@ def download_contest(year: str | int, contest: str) -> List[Dict[str, Any]]:
 
     The returned structure is a list where each item contains the fields:
     ``ID``, ``Year``, ``ProblemNumber``, ``QuestionType``, ``Question``,
-    ``Answer`` and ``Solution``.
+    ``Answer``, ``Solution`` and ``source``.
     """
     year_str = str(year)
 
@@ -110,10 +110,18 @@ def download_contest(year: str | int, contest: str) -> List[Dict[str, Any]]:
     is_aime = contest_clean.upper().startswith("AIME")
     if is_aime:
         base = f"{year_str} {contest_clean}"
+        source = "AIME"
     elif contest_clean.upper() == "AHSME":
         base = f"{year_str} AHSME"
+        source = "AHSME"
     else:
         base = f"{year_str} AMC {contest_clean}"
+        if contest_clean.startswith("8"):
+            source = "AMC8"
+        elif contest_clean.startswith("10"):
+            source = "AMC10"
+        else:
+            source = "AMC12"
 
     # Download main contest page with all problems
     print("Fetching problems for", year_str, contest)
@@ -144,6 +152,7 @@ def download_contest(year: str | int, contest: str) -> List[Dict[str, Any]]:
                 "Question": question,
                 "Answer": answers.get(number, ""),
                 "Solution": solution,
+                "source": source,
             }
         )
     return result
