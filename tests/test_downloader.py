@@ -37,7 +37,7 @@ def test_parsers_and_download():
         "Question",
         "Answer",
         "Solution",
-        "source",
+        "Source",
     }
     for item in data:
         assert set(item.keys()) == required_keys
@@ -48,7 +48,7 @@ def test_parsers_and_download():
     assert first["ProblemNumber"] == 1
     assert first["QuestionType"] == "choice"
     assert first["Answer"] in "ABCDE"
-    assert first["source"] == "AMC8"
+    assert first["Source"] == "AMC8"
     assert "Video Solution" not in first["Solution"]
 
 
@@ -73,7 +73,7 @@ def test_aime_and_ahsme():
     aime_data = download_contest("1998", "AIME")
     first = next(item for item in aime_data if item["ProblemNumber"] == 1)
     assert first["Answer"].isdigit()
-    assert first["source"] == "AIME"
+    assert first["Source"] == "AIME"
 
     # AHSME (1999)
     ahsme_text = fetch_page_wikitext("1999 AHSME Problems")
@@ -87,4 +87,4 @@ def test_aime_and_ahsme():
     ahsme_data = download_contest("1999", "AHSME")
     first_h = next(item for item in ahsme_data if item["ProblemNumber"] == 1)
     assert first_h["Answer"] in "ABCDE"
-    assert first_h["source"] == "AHSME"
+    assert first_h["Source"] == "AHSME"

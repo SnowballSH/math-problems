@@ -152,7 +152,7 @@ def download_contest(year: str | int, contest: str) -> List[Dict[str, Any]]:
                 "Question": question,
                 "Answer": answers.get(number, ""),
                 "Solution": solution,
-                "source": source,
+                "Source": source,
             }
         )
     return result
