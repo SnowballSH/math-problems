@@ -19,11 +19,11 @@ def resume_download():
         contests_available = (
             []
             if year_int <= 2001
-            else ["10A", "10B", "12A", "12B"]
-            if "2021" in year
-            else ["8"]
-            if "2025" in year
-            else contests
+            else (
+                ["10A", "10B", "12A", "12B"]
+                if "2021" in year
+                else ["8", "10A", "12A"] if "2025" in year else contests
+            )
         )
         aime = (
             []
